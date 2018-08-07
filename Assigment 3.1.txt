@@ -1,0 +1,175 @@
+1. How to Import SAS XPORT files into R with the foreign package?
+    Ans: The read.xport function reads SAS xport formatted files, augmenting the functionality of the read.xport function provided in the 'foreign' package with additional features, borrowed from sasxport.get in Frank Harrell's 'Hmisc' package. Namely, variables are properly coerced into the types specified by the format field. All standard numeric and string SAS formats are supported automatically, while user-defined formats are supported when the user has included the appropriate format data in the xport file via:
+
+     PROC FORMAT CNTLOUT=format;
+   
+In addition, labels are supported for variable and data frames, as are dataset 'types'.
+
+The write.xport function writes one or more data sets into a SAS xport formatted file. Standard R data types, including date and time objects (e.g. Date, and POSIX.t) are stored with proper SAS format types. Handling of object formatting is customizable by providing methods for the function toSAS. This is accomplished by writing a new method for toSAS for the object class of interest. The toSAS method is responsible for converting its argument to either a simple floating point or character variable (the only basic types permitted by the xport format) and adding the appropriate SAS format code in the "SASformat" attribute.
+
+The write.xport function also allows the user to override the operating system type and SAS version information, as well as object creation and modification times.
+
+Index
+lookup.xport           Lookup Information on a SAS XPORT Format
+                               Library
+read.xport               Import SAS XPORT files
+toSAS.default         Convert R data object for storage in SAS 
+                               xport file
+units                        Set or Retrieve the label, SASformat, 
+                               SASiformat, or units Attribute of a Vector
+write.xport              Write data to a SAS XPORT file
+makeSASNames     Create valid SAS names from a character vector.
+
+
+2. How to Import SAS Files into R with the Haven package?
+Ans: Haven allows you to load foreign data formats (SAS) in to R by wrapping the fantastic ReadStat C library written by Evan Miller. Haven offers similar functionality to the base foreign package but:
+
+Can read SAS's proprietary binary format (SAS7BDAT). The one other package on CRAN that does that, sas7bdat, was created to document the reverse-engineering effort. Thus its implementation is designed for experimentation, rather than efficiency. Haven is significantly faster and should also support a wider range of SAS files, and works with SAS7BCAT files.
+
+It can be faster. Some spss files seem to load about 4x faster, but others load slower. If you have a lot of SPSS files to import, you might want to benchmark both and pick the fastest.
+
+Works with Stata 13 files (foreign only works up to Stata 12).
+
+Can also write SPSS and Stata files (This is hard to test so if you run into any problems, please let me know).
+
+Can only read the data from the most common statistical packages (SAS).
+
+You always get a data frame, date times are converted to corresponding R classes and labelled vectors are returned as new labelled class. You can easily coerce to factors or replace labelled values with missings as appropriate. If you also use dplyr, you'll notice that large data frames are printed in a convenient way.
+
+Uses underscores instead of dots ;)
+
+Haven is still a work in progress so please file an issue if it fails to correctly load a file that you're interested in.
+
+Installation
+# Install the released version from CRAN:
+install.packages("haven")
+
+# Install the cutting edge development version from GitHub:
+# install.packages("devtools")
+devtools::install_github("hadley/haven")
+
+Usage
+SAS: read_sas("path/to/file")
+SPSS: read_por("path/to/file"), read_sav("path/to/file")
+Stata: read_dta("path/to/file")
+
+Updating readstat
+If you're working on the development version of haven, and you'd like to update the embedded ReadStat library, you can run the following code. It is not necessary if you're just using the package.
+
+tmp <- tempfile()
+download.file("https://github.com/WizardMac/ReadStat/archive/master.zip", tmp, 
+method = "wget")
+unzip(tmp, exdir = tempdir())
+
+src <- dir(file.path(tempdir(), "ReadStat-master", "src"), "\\.[ch]$", full.name = TRUE)
+file.copy(src, "src/", overwrite = TRUE)
+unlink(c("src/readstat_rdata.c", "src/readstat_rdata.h"))
+
+
+3. How to read Weka Attribute-Relation File Format (ARFF) files in R?
+ans: In general the answer to questions like this can be found via the sos package, which accesses a full-text search of all the packages on CRAN.
+
+install.packages("sos")
+library("sos")
+findFn("arff")
+
+finds functions in the foreign (as noted above) and RWeka packages. Since foreign is a recommended package, it will be installed on your system by default. Hence you would have found the answer with
+
+help.search("arff")
+
+in the first place, without installing the sos package.  sos is still worth having for times when the string you are searching for isn't in the metadata (title, keywords, alias, etc.), which is all that help.search searches, or not in a package you already have installed on your system (ditto). 
+
+
+4. How to read a heavy csv/tsv file using readr package?
+Ans: read_csv() and read_tsv() are special cases of the general read_delim(). They're useful for reading the most common types of flat file data, comma separated values and tab separated values, respectively. read_csv2() uses ; for the field separator and , for the decimal point. This is common in some European countries.
+
+Usage
+
+  read_delim(file, delim, quote = "\"", escape_backslash = FALSE,
+  escape_double = TRUE, col_names = TRUE, col_types = NULL,
+  locale = default_locale(), na = c("", "NA"), quoted_na = TRUE,
+  comment = "", trim_ws = FALSE, skip = 0, n_max = Inf,
+  guess_max = min(1000, n_max), progress = show_progress())
+
+  read_csv(file, col_names = TRUE, col_types = NULL,
+  locale = default_locale(), na = c("", "NA"), quoted_na = TRUE,
+ quote = "\"", comment = "", trim_ws = TRUE, skip = 0, n_max = Inf,
+  guess_max = min(1000, n_max), progress = show_progress())
+
+read_csv2(file, col_names = TRUE, col_types = NULL,
+  locale = default_locale(), na = c("", "NA"), quoted_na = TRUE,
+  quote = "\"", comment = "", trim_ws = TRUE, skip = 0, n_max = Inf,
+  guess_max = min(1000, n_max), progress = show_progress())
+
+read_tsv(file, col_names = TRUE, col_types = NULL,
+  locale = default_locale(), na = c("", "NA"), quoted_na = TRUE,
+  quote = "\"", comment = "", trim_ws = TRUE, skip = 0, n_max = Inf,
+  guess_max = min(1000, n_max), progress = show_progress())
+
+Arguments
+
+file 
+ Either a path to a file, a connection, or literal data (either a single string or a raw vector).
+
+Files ending in .gz, .bz2, .xz, or .zip will be automatically uncompressed. Files starting with http://, https://, ftp://, or ftps:// will be automatically downloaded. Remote gz files can also be automatically downloaded and decompressed.
+
+Literal data is most useful for examples and tests. It must contain at least one new line to be recognised as data (instead of a path) or be a vector of greater than length 1.
+
+Using a value of clipboard() will read from the system clipboard.
+
+delim	
+Single character used to separate fields within a record.
+
+quote	
+Single character used to quote strings.
+
+escape_backslash	
+Does the file use backslashes to escape special characters? This is more general than escape_double as backslashes can be used to escape the delimiter character, the quote character, or to add special characters like \n.
+
+escape_double	
+Does the file escape quotes by doubling them? i.e. If this option is TRUE, the value """" represents a single quote, \".
+
+col_names	
+Either TRUE, FALSE or a character vector of column names.
+
+If TRUE, the first row of the input will be used as the column names, and will not be included in the data frame. If FALSE, column names will be generated automatically: X1, X2, X3 etc.
+
+If col_names is a character vector, the values will be used as the names of the columns, and the first row of the input will be read into the first row of the output data frame.
+
+Missing (NA) column names will generate a warning, and be filled in with dummy names X1, X2 etc. Duplicate column names will generate a warning and be made unique with a numeric prefix.
+
+col_types	
+One of NULL, a cols() specification, or a string. See vignette("readr") for more details.
+
+If NULL, all column types will be imputed from the first 1000 rows on the input. This is convenient (and fast), but not robust. If the imputation fails, you'll need to supply the correct types yourself.
+
+If a column specification created by cols(), it must contain one column specification for each column. If you only want to read a subset of the columns, use cols_only().
+
+Alternatively, you can use a compact string representation where each character represents one column: c = character, i = integer, n = number, d = double, l = logical, D = date, T = date time, t = time, ? = guess, or _/- to skip the column.
+
+locale	
+The locale controls defaults that vary from place to place. The default locale is US-centric (like R), but you can use locale() to create your own locale that controls things like the default time zone, encoding, decimal mark, big mark, and day/month names.
+
+na	
+Character vector of strings to use for missing values. Set this option to character() to indicate no missing values.
+
+quoted_na	
+Should missing values inside quotes be treated as missing values (the default) or strings.
+
+comment	
+A string used to identify comments. Any text after the comment characters will be silently ignored.
+
+trim_ws	
+Should leading and trailing whitespace be trimmed from each field before parsing it?
+
+skip	
+Number of lines to skip before reading data.
+
+n_max	
+Maximum number of records to read.
+
+guess_max	
+Maximum number of records to use for guessing column types.
+
+progress	
+Display a progress bar? By default it will only display in an interactive session and not while knitting a document. The display is updated every 50,000 values and will only display if estimated reading time is 5 seconds or more. The automatic progress bar can be disabled by setting option readr.show_progress to FALSE.
